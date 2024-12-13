@@ -28,7 +28,10 @@ class ResetToStdConfig(inkex.Effect):
                 self.print_to_log(f"Showed layer: {layer.get(inkex.addNS('label', 'inkscape'))}")
                 self.show_parent_layers(layer)
 
-        # 3. Update the SVG document
+        # 3. Lock all layers and unlock "SCRATCH LAYER (STD)"
+        self.lock_and_unlock_layers()
+
+        # 4. Update the SVG document
         self.document.write(self.options.input_file)
 
         if self.enable_logging:
@@ -58,6 +61,24 @@ class ResetToStdConfig(inkex.Effect):
             self.set_layer_visibility(parent, True)
             self.print_to_log(f"Showed parent layer: {parent.get(inkex.addNS('label', 'inkscape'))}")
             self.show_parent_layers(parent)
+
+    def lock_and_unlock_layers(self):
+        """Locks all layers and unlocks the "SCRATCH LAYER (STD)" layer."""
+        try:
+            # Select all layers using XPath
+            layers = self.svg.xpath('//svg:g[@inkscape:groupmode="layer"]')
+
+            # Lock all layers
+            for layer in layers:
+                layer.set('sodipodi:insensitive', 'true')
+
+            # Unlock "SCRATCH LAYER (STD)"
+            scratch_layer = self.svg.xpath(f'//svg:g[@inkscape:label="SCRATCH LAYER (STD)"]')
+            if scratch_layer:
+                scratch_layer[0].set('sodipodi:insensitive', None)
+
+        except Exception as e:
+            self.print_to_log(f"Error locking/unlocking layers: {e}")
 
     def print_to_log(self, message):
         """Prints a message to the log file if logging is enabled."""
